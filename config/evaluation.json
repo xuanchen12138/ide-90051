@@ -1,0 +1,18 @@
+{
+  "protocolVersion": "1.0",
+  "declaredBeforeRun": true,
+  "minimumLatencySamples": 20,
+  "maxP95ObservedToRenderMs": 3000,
+  "maxP95ServerToRenderMs": 1500,
+  "maximumBrowserErrors": 0,
+  "maxTransportRecoverySeconds": 70,
+  "minimumAnimationFramesPerSecond": 30,
+  "reviewerCountTarget": 3,
+  "provenanceCorrectAnswersTarget": 3,
+  "rationale": {
+    "latency": "A 1-second sensor/SSE loop on localhost should usually render within three seconds, leaving room for scheduling jitter. This is a prototype usability target, not a safety guarantee.",
+    "recovery": "The upstream polling interval is 60 seconds; allow a further ten seconds for a bounded request. Automated fixture recovery is separate from an actual upstream outage.",
+    "animation": "30 FPS is a modest responsiveness target for a restrained 2D local effect, not a hydraulic simulation.",
+    "reviewers": "Three independent reviewers must distinguish simulated hazard, real transport observations, and synthetic alert fixture. Human assessment is recorded manually and never invented."
+  }
+}

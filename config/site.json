@@ -1,0 +1,327 @@
+{
+  "siteId": "city-rd-kings-way-116",
+  "displayName": "City Rd/Kings Way — Stop 116",
+  "passengerStopNumber": "116",
+  "routeShortName": "58",
+  "routeLongName": "West Coburg - Toorak",
+  "gtfsRouteIds": [
+    "aus:vic:vic-03-58:"
+  ],
+  "gtfsStopIds": [
+    "18233",
+    "22612"
+  ],
+  "gtfsShapeIds": [
+    "3-58-vpt-1.1.R",
+    "3-58-vpt-1.10.H",
+    "3-58-vpt-1.2.H",
+    "3-58-vpt-1.3.R",
+    "3-58-vpt-1.4.R",
+    "3-58-vpt-1.5.H",
+    "3-58-vpt-1.6.H",
+    "3-58-vpt-1.7.R",
+    "3-58-vpt-1.8.R",
+    "3-58-vpt-1.9.H",
+    "3-58-vpt-2.1.R",
+    "3-58-vpt-2.2.H",
+    "3-58-vpt-2.3.R",
+    "3-58-vpt-2.4.H",
+    "3-58-vpt-2.5.R",
+    "3-58-vpt-2.6.H",
+    "3-58-vpt-3.1.R",
+    "3-58-vpt-3.10.H",
+    "3-58-vpt-3.2.H",
+    "3-58-vpt-3.3.R",
+    "3-58-vpt-3.4.R",
+    "3-58-vpt-3.5.H",
+    "3-58-vpt-3.6.H",
+    "3-58-vpt-3.7.R",
+    "3-58-vpt-3.8.R",
+    "3-58-vpt-3.9.H",
+    "3-58-vpt-4.1.R",
+    "3-58-vpt-4.2.H",
+    "3-58-vpt-4.3.R",
+    "3-58-vpt-4.4.H",
+    "3-58-vpt-4.5.R",
+    "3-58-vpt-4.6.H",
+    "3-58-vpt-5.1.R",
+    "3-58-vpt-5.10.H",
+    "3-58-vpt-5.2.H",
+    "3-58-vpt-5.3.R",
+    "3-58-vpt-5.4.R",
+    "3-58-vpt-5.5.H",
+    "3-58-vpt-5.6.H",
+    "3-58-vpt-5.7.R",
+    "3-58-vpt-5.8.R",
+    "3-58-vpt-5.9.H"
+  ],
+  "gtfsAgencyIds": [
+    "1"
+  ],
+  "agencyIdResolution": "Blank routes.agency_id; resolved to the sole agency.txt record per GTFS",
+  "displayGtfsShapeIds": [
+    "3-58-vpt-5.2.H",
+    "3-58-vpt-5.3.R"
+  ],
+  "gtfsDatasetVersion": "2026-09-18",
+  "center": {
+    "latitude": -37.82625323,
+    "longitude": 144.96069632
+  },
+  "focusBounds": {
+    "north": -37.82145323,
+    "south": -37.83105323,
+    "east": 144.96719632,
+    "west": 144.95419632
+  },
+  "stops": [
+    {
+      "stopId": "18233",
+      "name": "City Rd/Kings Way #116",
+      "latitude": -37.82620633,
+      "longitude": 144.96058968,
+      "directions": [
+        {
+          "directionId": "0",
+          "headsigns": [
+            "La Trobe Street - Stop 7",
+            "Royal Childrens Hospital - Stop 19",
+            "West Coburg"
+          ],
+          "tripCount": 1234,
+          "shapeIds": [
+            "3-58-vpt-1.10.H",
+            "3-58-vpt-1.2.H",
+            "3-58-vpt-1.6.H",
+            "3-58-vpt-2.2.H",
+            "3-58-vpt-2.4.H",
+            "3-58-vpt-3.10.H",
+            "3-58-vpt-3.2.H",
+            "3-58-vpt-3.6.H",
+            "3-58-vpt-4.2.H",
+            "3-58-vpt-4.4.H",
+            "3-58-vpt-5.10.H",
+            "3-58-vpt-5.2.H",
+            "3-58-vpt-5.6.H"
+          ]
+        }
+      ],
+      "stopUrl": "https://transport.vic.gov.au/stop/3116/?utm_source=open_data_click_stop&utm_medium=open_data_stop_click&utm_campaign=open_data_click",
+      "verificationExample": {
+        "tripId": "03-58--1-T5-142608830",
+        "routeId": "aus:vic:vic-03-58:",
+        "directionId": "0",
+        "shapeId": "3-58-vpt-1.2.H",
+        "stopSequence": 21
+      }
+    },
+    {
+      "stopId": "22612",
+      "name": "City Rd/Kings Way #116",
+      "latitude": -37.82630014,
+      "longitude": 144.96080296,
+      "directions": [
+        {
+          "directionId": "1",
+          "headsigns": [
+            "Toorak"
+          ],
+          "tripCount": 1263,
+          "shapeIds": [
+            "3-58-vpt-1.1.R",
+            "3-58-vpt-1.3.R",
+            "3-58-vpt-1.7.R",
+            "3-58-vpt-2.1.R",
+            "3-58-vpt-2.3.R",
+            "3-58-vpt-3.1.R",
+            "3-58-vpt-3.3.R",
+            "3-58-vpt-3.7.R",
+            "3-58-vpt-4.1.R",
+            "3-58-vpt-4.3.R",
+            "3-58-vpt-5.1.R",
+            "3-58-vpt-5.3.R",
+            "3-58-vpt-5.7.R"
+          ]
+        }
+      ],
+      "stopUrl": "https://transport.vic.gov.au/stop/3116/?utm_source=open_data_click_stop&utm_medium=open_data_stop_click&utm_campaign=open_data_click",
+      "verificationExample": {
+        "tripId": "03-58--1-T5-142606020",
+        "routeId": "aus:vic:vic-03-58:",
+        "directionId": "1",
+        "shapeId": "3-58-vpt-1.7.R",
+        "stopSequence": 13
+      }
+    }
+  ],
+  "geometryUrl": "/api/v1/site/geometry",
+  "provenance": {
+    "sourceUrl": "https://opendata.transport.vic.gov.au/dataset/3f4e292e-7f8a-4ffe-831f-1953be0fe448/resource/fb152201-859f-4882-9206-b768060b50ad/download/gtfs.zip",
+    "datasetVersion": "2026-09-18",
+    "retrievedAt": "2026-09-21T17:09:58.667896+00:00",
+    "sourceLastModified": "Fri, 18 Sep 2026 14:02:12 GMT",
+    "sourceArchiveSizeBytes": 292748591,
+    "archiveMember": "3/google_transit.zip",
+    "tramArchiveSha256": "2f6676c61c14292f3d1f0fddfbeedce5ce966e163256e2449b2b0eeea7cff666",
+    "datasetPage": "https://opendata.transport.vic.gov.au/dataset/gtfs-schedule",
+    "tableSha256": {
+      "agency.txt": "009f89b0a6e4d112e368db3e9226590e4ad9de0a84aac74a9c60304bc498b3a7",
+      "routes.txt": "e5c8c99887c181190b839736a6a6da5f3ea240fc61cc92c638f7d889d4bd360d",
+      "stops.txt": "46fd82064677bdd261807d125a8fc936a1799535dcbcbe6e178229a00ea305cc",
+      "trips.txt": "eecc5f4da201532ac8152b270684bcfb9c9a7dbc94c53ef789c520027ae477a2",
+      "stop_times.txt": "006e247571a9515469d21a19de61ce58cebe2e9c0ba27e4280e0101ebf135722",
+      "shapes.txt": "a69ac9a10f1f6c898d8d2cdf9f2414082cbc222942cc8975c51ca17194141555"
+    },
+    "licence": "Creative Commons Attribution 4.0",
+    "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "Department of Transport and Planning, Victoria — GTFS Schedule"
+  },
+  "routeTripCount": 2652,
+  "shapeSelectionMethod": "Most frequently scheduled shape serving the site in each direction",
+  "localSegmentHalfLengthMeters": 600,
+  "conceptualFlood": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          144.96274343,
+          -37.82625323
+        ],
+        [
+          144.9627041,
+          -37.82604293
+        ],
+        [
+          144.9625876,
+          -37.82584071
+        ],
+        [
+          144.96239843,
+          -37.82565435
+        ],
+        [
+          144.96214385,
+          -37.82549099
+        ],
+        [
+          144.96183363,
+          -37.82535693
+        ],
+        [
+          144.96147972,
+          -37.82525732
+        ],
+        [
+          144.96109569,
+          -37.82519597
+        ],
+        [
+          144.96069632,
+          -37.82517526
+        ],
+        [
+          144.96029695,
+          -37.82519597
+        ],
+        [
+          144.95991292,
+          -37.82525732
+        ],
+        [
+          144.95955901,
+          -37.82535693
+        ],
+        [
+          144.95924879,
+          -37.82549099
+        ],
+        [
+          144.95899421,
+          -37.82565435
+        ],
+        [
+          144.95880504,
+          -37.82584071
+        ],
+        [
+          144.95868854,
+          -37.82604293
+        ],
+        [
+          144.95864921,
+          -37.82625323
+        ],
+        [
+          144.95868854,
+          -37.82646354
+        ],
+        [
+          144.95880504,
+          -37.82666576
+        ],
+        [
+          144.95899421,
+          -37.82685212
+        ],
+        [
+          144.95924879,
+          -37.82701548
+        ],
+        [
+          144.95955901,
+          -37.82714954
+        ],
+        [
+          144.95991292,
+          -37.82724915
+        ],
+        [
+          144.96029695,
+          -37.8273105
+        ],
+        [
+          144.96069632,
+          -37.82733121
+        ],
+        [
+          144.96109569,
+          -37.8273105
+        ],
+        [
+          144.96147972,
+          -37.82724915
+        ],
+        [
+          144.96183363,
+          -37.82714954
+        ],
+        [
+          144.96214385,
+          -37.82701548
+        ],
+        [
+          144.96239843,
+          -37.82685212
+        ],
+        [
+          144.9625876,
+          -37.82666576
+        ],
+        [
+          144.9627041,
+          -37.82646354
+        ],
+        [
+          144.96274343,
+          -37.82625323
+        ]
+      ]
+    ]
+  },
+  "conceptualFloodDescription": "Illustrative ellipse centred on the verified GTFS stop midpoint; 180 m east/west and 120 m north/south radii. Not an observed or modelled flood boundary.",
+  "impactScope": "local_segment",
+  "serviceCalendarRange": {
+    "start": "20260917",
+    "end": "20261220"
+  }
+}

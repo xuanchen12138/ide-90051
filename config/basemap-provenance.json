@@ -1,0 +1,40 @@
+{
+  "attribution": "© OpenStreetMap contributors",
+  "attributionUrl": "https://www.openstreetmap.org/copyright",
+  "bounds": {
+    "east": 144.978,
+    "north": -37.811,
+    "south": -37.839,
+    "west": 144.944
+  },
+  "countsByKind": {
+    "bridge": 257,
+    "building": 6119,
+    "landmark": 1091,
+    "park": 571,
+    "rail": 746,
+    "road": 9057,
+    "water": 28
+  },
+  "excluded": [],
+  "featureCount": 17869,
+  "geojsonSha256": "beb8ace4ed6594795b144276153f4ed24a7130c4f861651db82dec60b4b02fe8",
+  "license": "ODbL-1.0",
+  "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+  "osmBaseTimestamp": "2026-09-21T17:52:26Z",
+  "query": "[out:json][timeout:45];\n(\n  way[building](-37.839,144.944,-37.811,144.978);\n  relation[building][type=multipolygon](-37.839,144.944,-37.811,144.978);\n  way[highway](-37.839,144.944,-37.811,144.978);\n  way[railway~\"^(rail|tram|light_rail)$\"](-37.839,144.944,-37.811,144.978);\n  way[natural=water](-37.839,144.944,-37.811,144.978);\n  relation[natural=water][type=multipolygon](-37.839,144.944,-37.811,144.978);\n  way[waterway=riverbank](-37.839,144.944,-37.811,144.978);\n  relation[waterway=riverbank][type=multipolygon](-37.839,144.944,-37.811,144.978);\n  way[leisure~\"^(park|garden)$\"](-37.839,144.944,-37.811,144.978);\n  relation[leisure~\"^(park|garden)$\"][type=multipolygon](-37.839,144.944,-37.811,144.978);\n  way[landuse~\"^(grass|recreation_ground|forest)$\"](-37.839,144.944,-37.811,144.978);\n  way[man_made=bridge](-37.839,144.944,-37.811,144.978);\n  relation[man_made=bridge][type=multipolygon](-37.839,144.944,-37.811,144.978);\n  nwr[tourism][name](-37.839,144.944,-37.811,144.978);\n  nwr[amenity~\"^(arts_centre|theatre|casino|events_venue|conference_centre)$\"][name](-37.839,144.944,-37.811,144.978);\n  node[place~\"^(city|suburb|quarter|neighbourhood)$\"][name](-37.839,144.944,-37.811,144.978);\n  nwr[railway=station][name](-37.839,144.944,-37.811,144.978);\n);\nout geom;\n",
+  "rawSha256": "8f6f63a441faaf3bff7fd01c8f8a687176f940708c62d670cb7232cc641a2dd5",
+  "retrievedAt": "2026-09-21T17:54:43.996949+00:00",
+  "sourceElementCount": 17141,
+  "sourceUrl": "https://overpass-api.de/api/interpreter",
+  "supplements": [
+    {
+      "osmBaseTimestamp": "2026-09-21T17:54:31Z",
+      "query": "[out:json][timeout:25];way[waterway=river](-37.839,144.944,-37.811,144.978);out geom;",
+      "rawSha256": "935f6329561a2d9b5459ce3542d7c793a1cdc8c32325fe36559806bcd0f167cd",
+      "retrievedAt": "2026-09-21T17:56:21.639420+00:00",
+      "sourceUrl": "https://overpass-api.de/api/interpreter"
+    }
+  ],
+  "transform": "OSM ways and multipolygon member rings to GeoJSON; preserve complete rings and holes; names copied verbatim; label points derived from source geometry; no positional simplification or invented geometry."
+}

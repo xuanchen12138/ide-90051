@@ -1,0 +1,11 @@
+{
+  "purpose": "Demonstration only; not calibrated or approved for tram operations",
+  "thresholds": {"WATCH": 25, "WARNING": 50, "CRITICAL": 75},
+  "hysteresis": 3,
+  "riseDwellSeconds": 3,
+  "recoveryDwellSeconds": 5,
+  "sensorStaleSeconds": 30,
+  "futureToleranceSeconds": 5,
+  "sensorIntervalSeconds": 1,
+  "transportPollSeconds": 60
+}

@@ -1,0 +1,18 @@
+{
+  "runId": "",
+  "buildId": "",
+  "scenario": "critical-rise",
+  "seed": 0,
+  "startedAt": "",
+  "configurationHash": "",
+  "gtfsDatasetVersion": "",
+  "realtimeFetch": {},
+  "transitionChecks": [],
+  "latencySamplesMs": [],
+  "transportRecoverySeconds": null,
+  "animationFps": null,
+  "browserErrors": [],
+  "reviewers": [],
+  "errors": [],
+  "notes": "Blank values mean not measured. Preserve failed runs."
+}

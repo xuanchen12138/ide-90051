@@ -1,0 +1,143 @@
+{
+  "additionalProperties": false,
+  "description": "Stable ingestion contract. receivedAt is overwritten by the server.",
+  "properties": {
+    "readingId": {
+      "format": "uuid",
+      "title": "Readingid",
+      "type": "string"
+    },
+    "sensorId": {
+      "maxLength": 120,
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9_.:-]+$",
+      "title": "Sensorid",
+      "type": "string"
+    },
+    "siteId": {
+      "maxLength": 120,
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9_.:-]+$",
+      "title": "Siteid",
+      "type": "string"
+    },
+    "observedAt": {
+      "format": "date-time",
+      "title": "Observedat",
+      "type": "string"
+    },
+    "receivedAt": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Receivedat"
+    },
+    "scenarioLevel": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Scenariolevel",
+      "type": "number"
+    },
+    "waterDepthMm": {
+      "anyOf": [
+        {
+          "maximum": 10000,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Waterdepthmm"
+    },
+    "rainfallIntensityMmPerHour": {
+      "anyOf": [
+        {
+          "maximum": 1000,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Rainfallintensitymmperhour"
+    },
+    "trend": {
+      "default": "unknown",
+      "enum": [
+        "rising",
+        "falling",
+        "steady",
+        "unknown"
+      ],
+      "title": "Trend",
+      "type": "string"
+    },
+    "trendPerMinute": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Trendperminute"
+    },
+    "batteryPercent": {
+      "anyOf": [
+        {
+          "maximum": 100,
+          "minimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Batterypercent"
+    },
+    "quality": {
+      "default": "valid",
+      "enum": [
+        "valid",
+        "stale",
+        "fault",
+        "unknown"
+      ],
+      "title": "Quality",
+      "type": "string"
+    },
+    "source": {
+      "enum": [
+        "mock",
+        "physical"
+      ],
+      "title": "Source",
+      "type": "string"
+    }
+  },
+  "required": [
+    "readingId",
+    "sensorId",
+    "siteId",
+    "observedAt",
+    "scenarioLevel",
+    "source"
+  ],
+  "title": "SensorReading",
+  "type": "object"
+}
