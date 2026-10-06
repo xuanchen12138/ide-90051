@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { delayLabel, formatAge, formatTime, SCENARIOS, stateStyle } from './presentation';
+import { delayLabel, formatAge, formatTime, SCENARIOS, stateStyle, currentRain, vehicleTitle, transportSourceLabel } from './presentation';
 import { featureLines } from './MapView';
-import type { Feature } from './types';
+import type { Feature, Weather } from './types';
 
 describe('provenance and status presentation', () => {
   it('retains non-colour meaning for every backend state', () => {
@@ -38,5 +38,26 @@ describe('verified geometry rendering', () => {
     expect(featureLines(feature)).toEqual([coordinates]);
     expect(featureLines({ ...feature, geometry: { type: 'MultiLineString', coordinates: [coordinates] } })).toEqual([coordinates]);
     expect(featureLines({ ...feature, geometry: { type: 'Point', coordinates: [144.958, -37.826] } })).toEqual([]);
+  });
+});
+
+describe('rain and tram provenance boundaries', () => {
+  const weather: Weather = { intensityMmPerHour: 80, source: 'mock', observedAt: '2026-10-06T00:00:00Z', freshness: 'fresh' };
+  it('shows rain only for a fresh connected observation in its allowed operating mode', () => {
+    expect(currentRain(weather, true, 'simulation')).toBe(80);
+    expect(currentRain({ ...weather, intensityMmPerHour: 0 }, true, 'simulation')).toBe(0);
+    expect(currentRain(weather, false, 'simulation')).toBeNull();
+    expect(currentRain(weather, true, 'normal')).toBeNull();
+    expect(currentRain({ ...weather, freshness: 'stale' }, true, 'simulation')).toBeNull();
+    expect(currentRain({ ...weather, source: 'unavailable' }, true, 'simulation')).toBeNull();
+    for (const value of [null, NaN, -1, 201]) expect(currentRain({ ...weather, intensityMmPerHour: value }, true, 'simulation')).toBeNull();
+  });
+  it('labels each marker by its record source even in a mixed transport response', () => {
+    const vehicle = { vehicleId: 'DEMO-58-1', latitude: -37.82, longitude: 144.96, source: 'mock' };
+    expect(vehicleTitle(vehicle, 'mixed')).toBe('Mock demo tram DEMO-58-1');
+    expect(vehicleTitle({ ...vehicle, vehicleId: 'real-1', source: 'transport-victoria' }, 'mixed')).toBe('Observed tram real-1');
+    expect(vehicleTitle({ ...vehicle, source: undefined }, 'mixed')).toContain('Unconfirmed source');
+    expect(transportSourceLabel('mixed')).toContain('Live + mock');
+    expect(transportSourceLabel('mock')).toContain('Mock');
   });
 });

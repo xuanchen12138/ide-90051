@@ -14,7 +14,7 @@ async function level(request: APIRequestContext, page: Page, value: number, stat
 // One worker prevents shared scenario interference. Each test resets the runtime,
 // so a failure must not suppress the independent acceptance cases that follow.
 test.beforeEach(async ({ request, page }) => {
-  await command(request, '/settings', { mode: 'simulation', impactScope: 'local_segment' });
+  await command(request, '/settings', { mode: 'simulation', impactScope: 'local_segment', transportMode: 'auto' });
   await command(request, '/scenarios/reset');
   await page.goto('/');
   await expect(page.getByTestId('map')).toBeVisible();
@@ -186,4 +186,64 @@ test('mobile bottom sheet, keyboard access, and reduced motion', async ({ page, 
     const animation = await page.locator('.water-contour').evaluate(el => getComputedStyle(el).animationName);
     expect(animation).toBe('none');
   }
+});
+
+test('rain and moving mock trams are explicit, independent simulation inputs', async ({ page, request }) => {
+  await level(request, page, 10, 'Normal');
+  await page.getByLabel('Tram data source', { exact: true }).selectOption('mock');
+  await expect(page.locator('.source-line')).toContainText('MOCK TRAM DATA');
+  await expect(page.getByText('Mock tram demo · moving positions and trip timings are simulated, not real services.')).toBeVisible();
+  const tram = page.locator('.vehicle-marker[data-source="mock"]').first();
+  await expect(tram).toBeAttached();
+  await expect(tram.locator('title')).toContainText('Mock demo tram DEMO-58-');
+  const firstPosition = await tram.getAttribute('transform');
+  await expect.poll(() => tram.getAttribute('transform'), { timeout: 6000 }).not.toBe(firstPosition);
+  await expect(page.getByTestId('rain-intensity')).toHaveText('0');
+  await page.getByLabel('Simulated rainfall intensity', { exact: true }).focus();
+  await page.keyboard.press('End');
+  await expect(page.getByTestId('rain-intensity')).toHaveText('200');
+  await expect(page.getByTestId('rain-source')).toHaveText('SIMULATED');
+  await expect(page.getByTestId('rain-overlay')).toHaveAttribute('data-intensity', '200');
+  await expect(page.getByTestId('hazard-state')).toHaveText('Normal');
+  await expect(page.getByTestId('scenario-level')).toHaveText('10');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await page.getByTestId('rain-overlay').locator('line').first().evaluate(element => getComputedStyle(element).animationName)).toBe('none');
+  await page.getByLabel('Simulated rainfall intensity', { exact: true }).focus();
+  await page.keyboard.press('Home');
+  await expect(page.getByTestId('rain-intensity')).toHaveText('0');
+  await expect(page.getByTestId('rain-overlay')).toHaveCount(0);
+});
+
+test('physical float states do not masquerade as measured rain or millimetre depth', async ({ page, request }) => {
+  // Browser-only observation fixture: never submit invented physical readings to
+  // the running collector/backend or alter the real device's current state.
+  const snapshot = await (await request.get('/api/v1/snapshot')).json();
+  snapshot.scenario.mode = 'normal';
+  snapshot.scenario.transportMode = 'auto';
+  snapshot.status.hazardState = 'WARNING';
+  snapshot.status.displayState = 'WARNING';
+  snapshot.status.simulated = false;
+  snapshot.status.dataFreshness.sensor = 'fresh';
+  snapshot.sensor = { ...snapshot.sensor, source: 'physical', scenarioLevel: 60, floatLevel: 1, lowerFloat: true, upperFloat: false, sensorUptimeMs: 15000, quality: 'valid' };
+  snapshot.weather = { source: 'unavailable', intensityMmPerHour: null, observedAt: null, freshness: 'unavailable' };
+  await page.route('**/api/v1/snapshot', route => route.fulfill({ json: snapshot }));
+  await page.addInitScript(value => {
+    class FixtureEventSource extends EventTarget {
+      onmessage = null;
+      onerror = null;
+      constructor() { super(); setTimeout(() => this.dispatchEvent(new MessageEvent('snapshot', { data: JSON.stringify(value) })), 100); }
+      close() { /* no network stream in this fixture */ }
+    }
+    Object.defineProperty(window, 'EventSource', { value: FixtureEventSource, configurable: true });
+  }, snapshot);
+  await page.reload();
+  await expect(page.getByTestId('float-level')).toHaveText('Level 1 / 2');
+  await expect(page.getByTestId('lower-float')).toHaveText('Raised · water detected');
+  await expect(page.getByTestId('upper-float')).toHaveText('Lowered · no water at switch');
+  await expect(page.getByTestId('rain-source')).toHaveText('UNAVAILABLE');
+  await expect(page.getByTestId('rain-intensity')).toHaveText('—');
+  await expect(page.getByTestId('rain-overlay')).toHaveCount(0);
+  await expect(page.getByLabel('Simulated rainfall intensity', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Tram data source', { exact: true })).toHaveCount(0);
+  await expect(page.getByTestId('float-panel')).toContainText('These switches do not measure depth in mm.');
 });

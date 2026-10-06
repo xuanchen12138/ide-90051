@@ -1,0 +1,8 @@
+/* Self-hosted Latin subsets of Inter / Inter Display (SIL OFL 1.1, see public/fonts/LICENSE.txt).
+   No runtime request leaves the deployment; the e2e suite blocks every https:// host. */
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/inter-400.woff') format('woff'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/inter-500.woff') format('woff'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/inter-600.woff') format('woff'); }
+@font-face { font-family: 'Inter Display'; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/inter-display-400.woff') format('woff'); }
+@font-face { font-family: 'Inter Display'; font-style: normal; font-weight: 500; font-display: swap; src: url('/fonts/inter-display-500.woff') format('woff'); }
+@font-face { font-family: 'Inter Display'; font-style: normal; font-weight: 600; font-display: swap; src: url('/fonts/inter-display-600.woff') format('woff'); }
