@@ -1,29 +1,34 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Feature, GeoJSON, HazardState, Position, Site, Snapshot } from './types';
-import { stateStyle } from './presentation';
+import { stateStyle, vehicleTitle } from './presentation';
 import Icon from './Icon';
 import BasemapLayer from './BasemapLayer';
 import { CITY_BOUNDS, createProjection, linePath, onScreen, placeLabels, prepareBasemap } from './basemap';
 import type { BasemapData } from './basemap';
 
-type Props = { site: Site; geometry: GeoJSON; basemap: BasemapData | null; basemapFailed: boolean; snapshot: Snapshot | null; connected: boolean };
+type Props = { site: Site; geometry: GeoJSON; basemap: BasemapData | null; basemapFailed: boolean; snapshot: Snapshot | null; connected: boolean; intro?: boolean };
 export function featureLines(feature: Feature): Position[][] {
   if (feature.geometry.type === 'LineString') return [feature.geometry.coordinates as Position[]];
   if (feature.geometry.type === 'MultiLineString' || feature.geometry.type === 'Polygon') return feature.geometry.coordinates as Position[][];
   return [];
 }
 const GOOGLE_STYLE: google.maps.MapTypeStyle[] = [
-  { elementType: 'geometry', stylers: [{ color: '#f0f1ee' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#747976' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#f8f8f6' }] },
-  { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
-  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#dfe7d8' }] },
+  { elementType: 'geometry', stylers: [{ color: '#f3f3f0' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#595f64' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#f3f3f0' }] },
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ visibility: 'on' }, { color: '#e4e9e0' }] },
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#d2d5d2' }] },
-  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#b7bdb9' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#8f9791' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#b8d8dd' }] },
-  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#e9eae8' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#c8ccca' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#9a9fa2' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#555a5e' }] },
+  { featureType: 'road.highway', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#d5e3e6' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4d8191' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#ebece9' }] },
+  { featureType: 'landscape.man_made', elementType: 'geometry.stroke', stylers: [{ color: '#d6d9d5' }] },
 ];
 let googleLoader: Promise<void> | null = null;
 function loadGoogle() {
@@ -61,7 +66,7 @@ export default function MapView(props: Props) {
   </div>;
 }
 
-function OfflineMap({ site, geometry, basemap, snapshot, connected }: Props) {
+function OfflineMap({ site, geometry, basemap, snapshot, connected, intro }: Props) {
   const [view, setView] = useState({ x: 0, y: 0, zoom: 1 });
   const [full, setFull] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -95,8 +100,10 @@ function OfflineMap({ site, geometry, basemap, snapshot, connected }: Props) {
   const localPaths = local.flatMap(f => featureLines(f)).map(path);
   const center = project([site.center.longitude, site.center.latitude]);
   const siteScreen = onScreen(center, view, size);
-  const calloutX = Math.max(10, Math.min(size.width - (size.width < 600 ? 95 : 9) - 187, siteScreen[0] + (size.width < 600 ? -93 : 25)));
   const calloutY = siteScreen[1] + 22;
+  // Keep the callout clear of the control stack in the lower-right corner.
+  const rightReserve = size.width < 600 ? 136 : calloutY > size.height - 330 ? 200 : 9;
+  const calloutX = Math.max(10, Math.min(size.width - rightReserve - 187, siteScreen[0] + (size.width < 600 ? -93 : 25)));
   const labels = useMemo(() => full ? [] : placeLabels(prepared, view, size, [
     [0, 0, size.width < 600 ? 285 : 360, size.width < 600 ? 115 : 145],
     [0, size.height - (size.width < 600 ? 120 : 175), size.width < 600 ? 305 : 485, size.height],
@@ -122,10 +129,11 @@ function OfflineMap({ site, geometry, basemap, snapshot, connected }: Props) {
   const showFull = () => { setFull(v => !v); setView({ x: 0, y: 0, zoom: 1 }); };
   const metersPerPixel = 1 / (projection.pixelsPerMeter * view.zoom);
   const scaleMeters = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000].filter(m => m / metersPerPixel <= 100).at(-1) ?? 10;
-  const routeStroke = (paths: string[], isLocal: boolean) => paths.map((d, i) => <g key={i}>
+  const routeStroke = (paths: string[], isLocal: boolean) => paths.map((d, i) => <g key={i} className={`route-layer ${isLocal ? 'local' : 'context'} ${intro ? 'drawing' : ''}`}>
     <path d={d} className="route-halo" strokeWidth={isLocal ? 16 : 9} />
     {state === 'WATCH' && (isLocal || fullImpact) && <path d={d} className="route-halo watch-outline" stroke="#6b5816" strokeWidth={isLocal ? 13 : 8} style={{ stroke: '#6b5816', strokeOpacity: .8 }} />}
-    <path d={d} className={`route-stroke ${state === 'CRITICAL' && (isLocal || fullImpact) ? 'critical-route' : ''}`} data-risk={isLocal || fullImpact ? state : 'context'} stroke={isLocal || fullImpact ? style.color : '#8d9990'} strokeWidth={isLocal ? 9 : 4} strokeDasharray={state === 'UNKNOWN' ? '10 8' : undefined} opacity={isLocal || fullImpact ? 1 : .5} />
+    <path d={d} className={`route-stroke ${state === 'CRITICAL' && (isLocal || fullImpact) ? 'critical-route' : ''}`} data-risk={isLocal || fullImpact ? state : 'context'} stroke={isLocal || fullImpact ? style.color : '#6d7a71'} strokeWidth={isLocal ? 9 : 4} strokeDasharray={state === 'UNKNOWN' ? '10 8' : undefined} opacity={isLocal || fullImpact ? 1 : .55} />
+    {intro && <path d={d} className="route-draw" pathLength={1} stroke={isLocal || fullImpact ? style.color : '#6d7a71'} strokeWidth={isLocal ? 9 : 4} />}
   </g>);
   return <>
     <svg ref={svg} viewBox={`0 0 ${size.width} ${size.height}`} className={`offline-map ${dragging ? 'dragging' : ''}`} role="img" aria-label="Verified Route 58 geometry and City Road Kings Way Stop 116 on a detailed Melbourne street map with buildings, bridges and the Yarra River. Pan with arrow keys; zoom with plus and minus." tabIndex={0}
@@ -134,47 +142,54 @@ function OfflineMap({ site, geometry, basemap, snapshot, connected }: Props) {
       onPointerMove={e => { if (!pointer.current || !svg.current) return; const p = pointer.current; setView(v => ({ ...v, x: p.originX + e.clientX - p.x, y: p.originY + e.clientY - p.y })); }}
       onPointerUp={() => { pointer.current = null; setDragging(false); }} onPointerCancel={() => { pointer.current = null; setDragging(false); }}>
       <defs>
-        <pattern id="water-lines" width="34" height="22" patternUnits="userSpaceOnUse"><path d="M-10 11 Q0 2 10 11 T30 11 T50 11" stroke="#5997ac" strokeWidth="1.4" fill="none" opacity=".55" /></pattern>
-        <radialGradient id="water-fill"><stop offset="0" stopColor="#8cc9d8" stopOpacity=".55" /><stop offset="1" stopColor="#8cc9d8" stopOpacity=".16" /></radialGradient>
+        <pattern id="water-lines" width="34" height="22" patternUnits="userSpaceOnUse"><path d="M-10 11 Q0 2 10 11 T30 11 T50 11" stroke="#4f93a9" strokeWidth="1.2" fill="none" opacity=".5" /></pattern>
+        <radialGradient id="water-fill"><stop offset="0" stopColor="#8cc9d8" stopOpacity=".62" /><stop offset=".7" stopColor="#8cc9d8" stopOpacity=".3" /><stop offset="1" stopColor="#8cc9d8" stopOpacity=".12" /></radialGradient>
       </defs>
       <g transform={`translate(${size.width / 2 + view.x}, ${size.height / 2 + view.y}) scale(${view.zoom}) translate(${-size.width / 2},${-size.height / 2})`}>
-        {basemap ? <BasemapLayer data={basemap} items={prepared} projection={projection} view={view} size={size} /> : [0, 1, 2, 3, 4].map(i => {
+        {basemap ? <g className={intro ? 'basemap-intro' : undefined}><BasemapLayer data={basemap} items={prepared} projection={projection} view={view} size={size} /></g> : [0, 1, 2, 3, 4].map(i => {
           const lon = bounds.west + (bounds.east - bounds.west) * i / 4;
           const lat = bounds.south + (bounds.north - bounds.south) * i / 4;
           const [x] = project([lon, lat]); const [, y] = project([lon, lat]);
           return <g key={i} className="coordinate-grid"><line x1={x} x2={x} y1="-3000" y2="3000" /><line y1={y} y2={y} x1="-3000" x2="3000" /><text x={x + 8} y={765}>{lon.toFixed(4)}°E</text><text x={40} y={y - 9}>{Math.abs(lat).toFixed(4)}°S</text></g>;
         })}
         {waterLevel > 0 && floodPath && <g className={snapshot?.scenario.paused ? 'water-overlay paused' : 'water-overlay'} opacity={Math.min(.95, .12 + waterLevel / 100)} transform={`translate(${center[0]},${center[1]}) scale(${.3 + waterLevel / 95}) translate(${-center[0]},${-center[1]})`} data-testid="flood-overlay">
-          <path d={floodPath} fill="url(#water-fill)" stroke="#7eb6c6" strokeWidth="1.2" />
+          <path d={floodPath} fill="url(#water-fill)" stroke="#6fa9bb" strokeWidth="1" strokeOpacity=".7" />
           <path className="water-texture" d={floodPath} fill="url(#water-lines)" />
-          <path className="water-contour" d={floodPath} fill="none" stroke="#7eb6c6" strokeWidth="2" />
+          <path className="water-contour" d={floodPath} fill="none" stroke="#6fa9bb" strokeWidth="1.5" />
+          <path className="water-contour second" d={floodPath} fill="none" stroke="#6fa9bb" strokeWidth="1" />
         </g>}
         {routeStroke(routePaths, false)}{routeStroke(localPaths, true)}
         {(connected ? snapshot?.transport.vehicles.filter(v => v.freshness === 'fresh') ?? [] : []).map((vehicle, i) => {
           const [x, y] = project([vehicle.longitude, vehicle.latitude]);
-          return <g key={vehicle.vehicleId ?? i} transform={`translate(${x},${y})`} className="vehicle-marker"><title>{snapshot?.transport.source === 'fixture' ? 'Fixture' : 'Observed'} tram {vehicle.vehicleId ?? ''}{vehicle.observedAt ? ` · ${vehicle.observedAt}` : ''}</title><rect x="-8" y="-11" width="16" height="22" rx="5" /><path d="M-4-5h8M-4 5h8" /></g>;
+          return <g key={vehicle.vehicleId ?? i} transform={`translate(${x},${y})`} className="vehicle-marker" data-source={vehicle.source ?? (snapshot?.transport.source === 'mixed' ? 'unconfirmed' : snapshot?.transport.source)}><title>{vehicleTitle(vehicle, snapshot?.transport.source)}</title><g transform={`rotate(${vehicle.bearing ?? 0}) scale(${1 / Math.sqrt(view.zoom)})`}><rect x="-7" y="-11" width="14" height="22" rx="4" /><path d="M-3.5-5h7M-3.5 0h7M-3.5 5h7" /><path className="vehicle-nose" d="M-3-13 0-16 3-13" /></g></g>;
         })}
         {site.stops.map((stop, i) => {
           const [x, y] = project([stop.longitude, stop.latitude]);
-          return <g key={stop.stopId} className="stop-marker" data-testid="stop-marker"><circle cx={x} cy={y} r={8 / view.zoom} fill="white" stroke={style.color} strokeWidth={3 / view.zoom} /><circle cx={x} cy={y} r={3 / view.zoom} fill="#24282c" /><title>{stop.name} · GTFS {stop.stopId} · platform {i + 1}</title></g>;
+          return <g key={stop.stopId} className={`stop-marker ${state === 'CRITICAL' ? 'pulsing' : ''}`} data-testid="stop-marker" style={{ transformOrigin: `${x}px ${y}px` }}>
+            {state === 'CRITICAL' && <circle className="stop-pulse" cx={x} cy={y} r={9 / view.zoom} fill="none" stroke={style.color} strokeWidth={1.5 / view.zoom} />}
+            <circle cx={x} cy={y} r={11 / view.zoom} fill="#ffffff" fillOpacity=".9" stroke="none" />
+            <circle cx={x} cy={y} r={8 / view.zoom} fill="white" stroke={style.color} strokeWidth={3 / view.zoom} strokeDasharray={state === 'UNKNOWN' ? `${3 / view.zoom} ${2.2 / view.zoom}` : undefined} />
+            <circle cx={x} cy={y} r={2.6 / view.zoom} fill="#16191c" />
+            <title>{stop.name} · GTFS {stop.stopId} · platform {i + 1}</title>
+          </g>;
         })}
       </g>
       <g className="map-labels">{labels.map(label => <text key={label.id} className={`label-${label.kind}`} data-map-label={label.kind} x={label.x} y={label.y} textAnchor="middle" dominantBaseline="middle" transform={label.angle ? `rotate(${label.angle},${label.x},${label.y})` : undefined}>{label.name}</text>)}</g>
       {!full && siteScreen[0] > -20 && siteScreen[0] < size.width + 20 && siteScreen[1] > 0 && siteScreen[1] < size.height - 80 && <g className="site-callout">
         <line x1={siteScreen[0] + 8} y1={siteScreen[1] + 8} x2={calloutX + 10} y2={calloutY + 6} />
-        <g transform={`translate(${calloutX},${calloutY})`}><rect width="187" height="45" rx="5" /><text x="11" y="18" className="stop-title">City Rd / Kings Way</text><text x="11" y="34" className="stop-caption">58 · STOP 116 · BOTH DIRECTIONS</text></g>
+        <g transform={`translate(${calloutX},${calloutY})`}><rect width="187" height="45" rx="3" /><rect className="callout-accent" x="0" y="0" width="3" height="45" /><text x="13" y="18" className="stop-title">City Rd / Kings Way</text><text x="13" y="34" className="stop-caption">58 · STOP 116 · BOTH DIRECTIONS</text></g>
       </g>}
     </svg>
     <MapControls onReset={reset} onZoom={zoom} onFull={showFull} full={full} />
-    <div className="north-arrow" aria-label="North is up"><span>N</span><svg width="17" height="25" viewBox="0 0 17 25" aria-hidden="true"><path d="M8.5 0 17 23 8.5 18 0 23Z" fill="#5c645d" /><path d="M8.5 0v18L0 23Z" fill="#b2b8b3" /></svg></div>
-    <div className="map-keyboard-hint">Drag to pan <span>·</span> Scroll to explore buildings</div>
+    <div className="north-arrow" aria-label="North is up"><svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="13" fill="none" stroke="#d8dbd7" /><path d="M14 3 18 15H10Z" fill="#16191c" /><path d="M14 25 10 13h8Z" fill="#c7cbc7" /></svg><span>N</span></div>
+    <div className="map-keyboard-hint">Drag to pan<span>·</span>Scroll to zoom<span>·</span>Arrow keys</div>
     <div className="map-scale" aria-label={`Map scale ${scaleMeters} metres`}>{scaleMeters >= 1000 ? `${scaleMeters / 1000} km` : `${scaleMeters} m`}<i style={{ width: scaleMeters / metersPerPixel }} /></div>
     {full && <div className="coverage-note">Street detail covers central Melbourne.<br />Full Route 58 follows verified GTFS geometry.</div>}
   </>;
 }
 
 function MapControls({ onReset, onZoom, onFull, full }: { onReset: () => void; onZoom: (factor: number) => void; onFull: () => void; full: boolean }) {
-  return <div className="map-controls"><button className="map-return" onClick={onReset}><Icon name="target" />Return to Stop 116</button><button className="map-full" onClick={onFull} aria-pressed={full}>{full ? 'Local view' : 'View full route'}</button><div className="zoom-buttons"><button onClick={() => onZoom(1.25)} aria-label="Zoom in"><Icon name="plus" /></button><button onClick={() => onZoom(1 / 1.25)} aria-label="Zoom out"><Icon name="minus" /></button></div></div>;
+  return <div className="map-controls"><button className="map-return" onClick={onReset}><Icon name="target" size={15} />Return to Stop 116</button><button className="map-full" onClick={onFull} aria-pressed={full}><Icon name={full ? 'collapse' : 'expand'} size={14} />{full ? 'Local view' : 'View full route'}</button><div className="zoom-buttons"><button onClick={() => onZoom(1.25)} aria-label="Zoom in"><Icon name="plus" size={16} /></button><button onClick={() => onZoom(1 / 1.25)} aria-label="Zoom out"><Icon name="minus" size={16} /></button></div></div>;
 }
 
 function GoogleMap({ site, geometry, snapshot, connected }: Props) {
@@ -239,7 +254,7 @@ function GoogleMap({ site, geometry, snapshot, connected }: Props) {
       overlays.push(new google.maps.Marker({ map, position: { lat: stop.latitude, lng: stop.longitude }, title: `${stop.name} · GTFS ${stop.stopId}`, zIndex: 10, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 11, fillColor: '#ffffff', fillOpacity: 1, strokeColor: color, strokeWeight: 4 } }));
       overlays.push(new google.maps.Marker({ map, position: { lat: stop.latitude, lng: stop.longitude }, title: stop.name, zIndex: 11, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 4, fillColor: '#24282c', fillOpacity: 1, strokeWeight: 0 } }));
     });
-    (connected ? snapshot?.transport.vehicles.filter(v => v.freshness === 'fresh') ?? [] : []).forEach(vehicle => overlays.push(new google.maps.Marker({ map, position: { lat: vehicle.latitude, lng: vehicle.longitude }, title: `${snapshot?.transport.source === 'fixture' ? 'Fixture' : 'Observed'} tram ${vehicle.vehicleId ?? ''} · ${vehicle.observedAt ?? 'Observation time unavailable'}`, zIndex: 9, icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 4, fillColor: '#4a5351', fillOpacity: 1, strokeColor: 'white', strokeWeight: 1.5, rotation: vehicle.bearing ?? 0 } })));
+    (connected ? snapshot?.transport.vehicles.filter(v => v.freshness === 'fresh') ?? [] : []).forEach(vehicle => overlays.push(new google.maps.Marker({ map, position: { lat: vehicle.latitude, lng: vehicle.longitude }, title: vehicleTitle(vehicle, snapshot?.transport.source) + (vehicle.observedAt ? '' : ' · Observation time unavailable'), zIndex: 9, icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 4, fillColor: vehicle.source === 'mock' ? '#f3e2b3' : '#4a5351', fillOpacity: 1, strokeColor: vehicle.source === 'mock' ? '#8a6a1f' : 'white', strokeWeight: 1.5, rotation: vehicle.bearing ?? 0 } })));
     const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
     let pulseTimer: number | undefined;
     const configurePulse = () => {

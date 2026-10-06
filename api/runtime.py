@@ -8,6 +8,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from adapters.mock_sensor import MockSensorProvider, SCENARIO_IDS
+from adapters.mock_transport import MockTransportProvider, apply_fallback
 from adapters.physical_sensor import HttpSensorProvider
 from api.store import Store
 from domain.models import SensorReading, iso, utc_now
@@ -76,6 +77,9 @@ class Runtime:
         self.real_transport = self.transport.snapshot(utc_now())
         self.transport_refresh_failed = False
         self.mock = MockSensorProvider()
+        self.mock_transport = MockTransportProvider(self.site)
+        self.transport_mode = "auto"
+        self.manual_rainfall = None
         self.physical = HttpSensorProvider()
         previous_physical = self.store.latest_physical(self.site["siteId"])
         if previous_physical:
@@ -108,7 +112,8 @@ class Runtime:
 
     def scenario(self) -> dict:
         return {"id": self.scenario_id, "paused": self.paused, "elapsedSeconds": round(self.elapsed, 3),
-                "manualLevel": self.manual_level, "mode": self.mode, "impactScope": self.impact_scope}
+                "manualLevel": self.manual_level, "manualRainfall": self.manual_rainfall,
+                "transportMode": self.transport_mode, "mode": self.mode, "impactScope": self.impact_scope}
 
     def effective_transport(self, now: datetime) -> dict:
         real = copy.deepcopy(self.transport.snapshot(now))
@@ -126,13 +131,11 @@ class Runtime:
                     feed["freshness"] = "stale"
                 feed["error"] = "adapter_refresh_failed"
         self.real_transport = copy.deepcopy(real)
-        if self.mode != "simulation":
-            return real
-        if self.scenario_id == "transport-feed-unavailable":
+        if self.mode == "simulation" and self.scenario_id == "transport-feed-unavailable":
             real.update(source="fixture", freshness="unavailable", vehicles=[], tripUpdates=[], alerts=[], fixture=True,
                         fixtureLabel="Demonstration transport outage — not a live feed failure")
             real["feeds"] = {name: {"freshness": "unavailable", "error": "fixture_outage"} for name in ("vehiclePositions", "tripUpdates", "serviceAlerts")}
-        elif self.scenario_id == "official-alert-present":
+        elif self.mode == "simulation" and self.scenario_id == "official-alert-present":
             # Do not combine a fixture's timestamp/health with an actual feed's content.
             real = {"routeShortName": "58", "source": "fixture", "fixture": True,
                     "fixtureLabel": "Demonstration official-alert fixture — not a live official alert",
@@ -141,6 +144,11 @@ class Runtime:
                                 "description": "A test alert to demonstrate independent official-service classification. This is not a live official report.",
                                 "effect": "NO_SERVICE", "source": "fixture", "activeFrom": iso(now)}],
                     "feeds": {name: {"freshness": "fresh", "source": "fixture", "fetchedAt": iso(now), "feedTimestamp": iso(now)} for name in ("vehiclePositions", "tripUpdates", "serviceAlerts")}}
+        else:
+            return apply_fallback(real, self.mock_transport.snapshot(now), force_mock=self.mode == "simulation" and self.transport_mode == "mock")
+        # Named test fixtures are intentionally separate from automatic fallback.
+        real["fallback"] = False
+        real["liveFeeds"] = copy.deepcopy(self.real_transport.get("feeds", {}))
         return real
 
     async def ingest(self, reading: SensorReading, *, external=False, now=None) -> dict:
@@ -174,7 +182,7 @@ class Runtime:
             if not self.paused:
                 self.elapsed += delta
             if generate:
-                reading = await self.mock.get_latest(self.site["siteId"], scenario_id=self.scenario_id, elapsed=self.elapsed, now=now, manual_level=self.manual_level)
+                reading = await self.mock.get_latest(self.site["siteId"], scenario_id=self.scenario_id, elapsed=self.elapsed, now=now, manual_level=self.manual_level, manual_rainfall=self.manual_rainfall)
                 await self.ingest(reading, now=now)
         else:
             self.sensor = await self.physical.get_latest(self.site["siteId"])
@@ -199,9 +207,22 @@ class Runtime:
             queue.put_nowait(snapshot)
         return snapshot
 
+    def weather(self, now: datetime) -> dict:
+        reading = self.sensor
+        value = reading.rainfallIntensityMmPerHour if reading else None
+        if value is None:
+            return {"intensityMmPerHour": None, "source": "unavailable", "observedAt": None, "freshness": "unavailable"}
+        age = (now - reading.observedAt).total_seconds()
+        freshness = "fresh"
+        if reading.quality in {"fault", "unknown"} or age < -self.config.get("futureToleranceSeconds", 5):
+            freshness = "unavailable"
+        elif reading.quality == "stale" or age > self.config.get("sensorStaleSeconds", 30):
+            freshness = "stale"
+        return {"intensityMmPerHour": value, "source": reading.source, "observedAt": iso(reading.observedAt), "freshness": freshness}
+
     def snapshot(self, now=None, transport=None) -> dict:
         now = now or utc_now()
-        return {"status": self.status, "sensor": self.sensor.model_dump(mode="json") if self.sensor else None,
+        return {"status": self.status, "sensor": self.sensor.model_dump(mode="json") if self.sensor else None, "weather": self.weather(now),
                 "transport": transport if transport is not None else self.effective_transport(now),
                 "scenario": self.scenario(), "timeline": self.store.events(self.run_id, 20, exclude=("sensor-ingested", "reading-evaluated", "browser-render", "transport-polled")),
                 "serverTime": iso(now)}
@@ -211,6 +232,7 @@ class Runtime:
             raise ValueError("unknown_scenario")
         self.mode, self.scenario_id = "simulation", scenario_id
         self.elapsed, self.paused, self.manual_level = 0.0, False, None
+        self.manual_rainfall = None
         self.last_tick = utc_now()
         # Every named scenario starts from its documented first reading.
         self.memory, self.sensor, self.status = TransitionState(), None, None
@@ -219,6 +241,8 @@ class Runtime:
 
     async def reset(self):
         self.impact_scope = "local_segment"
+        self.manual_rainfall = None
+        self.transport_mode = "auto"
         if self.mode == "normal":
             self.scenario_id, self.elapsed, self.manual_level, self.paused = "normal-steady", 0.0, None, False
             self.memory, self.status = TransitionState(), None
@@ -226,17 +250,23 @@ class Runtime:
             return await self.tick(generate=False)
         return await self.start_scenario("normal-steady")
 
-    async def update_settings(self, mode=None, impact_scope=None):
+    async def update_settings(self, mode=None, impact_scope=None, transport_mode=None):
+        if transport_mode == "mock" and (mode or self.mode) != "simulation":
+            raise ValueError("mock_transport_requires_simulation_mode")
         if mode and mode != self.mode:
             self.mode = mode
             self.memory, self.sensor, self.status = TransitionState(), None, None
             self.scenario_id, self.elapsed, self.manual_level = "normal-steady", 0.0, None
+            self.manual_rainfall = None
             self.paused = False
             self.last_tick = utc_now()
+        if transport_mode:
+            self.transport_mode = transport_mode
         if impact_scope:
             self.impact_scope = impact_scope
         if self.mode == "normal":
             self.impact_scope = "local_segment"
+            self.transport_mode = "auto"
         self.store.event(self.run_id, "settings-changed", self.scenario())
         return await self.tick()
 

@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from adapters.mock_sensor import SCENARIOS, SCENARIO_IDS
 from api.deployment import DemoAccessMiddleware, validate_deployment
 from api.runtime import ROOT, Runtime
-from domain.models import ManualControl, RenderTelemetry, SensorReading, SettingsUpdate, utc_now
+from domain.models import ManualControl, RainfallControl, RenderTelemetry, SensorReading, SettingsUpdate, utc_now
 
 load_dotenv(ROOT / ".env")
 
@@ -97,13 +97,16 @@ def create_app(database_path: str | None = None, start_background: bool = True, 
     @app.get("/health/live")
     @app.get("/api/v1/health/live")
     async def live():
-        return {"status": "ok"}
+        # The local launcher uses this nonce to distinguish its child API from
+        # an unrelated or previously running server on the requested port.
+        instance_id = os.getenv("PLATFORM_INSTANCE_ID")
+        return {"status": "ok", **({"instanceId": instance_id} if instance_id else {})}
 
     @app.get("/health/ready")
     @app.get("/api/v1/health/ready")
     async def ready(request: Request):
         current = runtime(request).snapshot()
-        degraded = current["status"]["dataFreshness"]["sensor"] != "fresh" or current["transport"]["freshness"] != "fresh"
+        degraded = current["status"]["dataFreshness"]["sensor"] != "fresh" or current["transport"]["freshness"] != "fresh" or current["transport"].get("fallback", False)
         return {"status": "degraded" if degraded else "ready", "ready": True,
                 "dataFreshness": current["status"]["dataFreshness"], "mode": current["scenario"]["mode"]}
 
@@ -207,10 +210,24 @@ def create_app(database_path: str | None = None, start_background: bool = True, 
         current.store.event(current.run_id, "manual-level", {"level": value.level, "message": f"Manual demonstration level: {value.level:g}/100"})
         return await current.tick()
 
+    @app.post("/api/v1/scenarios/rainfall")
+    async def scenario_rainfall(value: RainfallControl, request: Request):
+        authorize(request, "ADMIN_API_TOKEN")
+        current = runtime(request)
+        if current.mode != "simulation":
+            raise HTTPException(409, "rainfall_control_requires_simulation_mode")
+        current.manual_rainfall = value.intensityMmPerHour
+        current.store.event(current.run_id, "manual-rainfall", {"intensityMmPerHour": value.intensityMmPerHour,
+                            "message": f"Simulated rain: {value.intensityMmPerHour:g} mm/h; independent of the scripted water level."})
+        return await current.tick()
+
     @app.post("/api/v1/settings")
     async def settings(value: SettingsUpdate, request: Request):
         authorize(request, "ADMIN_API_TOKEN")
-        return await runtime(request).update_settings(value.mode, value.impactScope)
+        try:
+            return await runtime(request).update_settings(value.mode, value.impactScope, value.transportMode)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
 
     @app.post("/api/v1/telemetry/render")
     async def telemetry(value: RenderTelemetry, request: Request):

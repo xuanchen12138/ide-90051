@@ -31,7 +31,7 @@ def body(**updates):
 
 def test_endpoint_contract_and_ready_degraded(client):
     snapshot = client.get("/api/v1/snapshot").json()
-    assert set(snapshot) == {"status", "sensor", "transport", "scenario", "timeline", "serverTime"}
+    assert set(snapshot) == {"status", "sensor", "weather", "transport", "scenario", "timeline", "serverTime"}
     assert snapshot["status"]["hazardState"] == "NORMAL"
     assert snapshot["status"]["serviceState"] == "UNKNOWN"
     assert client.get("/api/v1/status").json()["hazardState"] == "NORMAL"
@@ -81,13 +81,13 @@ def test_fixture_removed_by_reset_and_normal_mode(client):
     fixture = client.post("/api/v1/scenarios/official-alert-present/start").json()
     assert fixture["transport"]["source"] == fixture["status"]["serviceSource"] == "fixture"
     reset = client.post("/api/v1/scenarios/reset").json()
-    assert reset["transport"]["source"] == "transport-victoria" and not reset["transport"]["alerts"]
+    assert reset["transport"]["source"] == "mock" and reset["transport"]["fallback"] and not reset["transport"]["alerts"]
     client.post("/api/v1/scenarios/official-alert-present/start")
     normal = client.post("/api/v1/settings", json={"mode": "normal"}).json()
     assert normal["sensor"] is None
     assert normal["status"]["hazardState"] == normal["status"]["serviceState"] == "UNKNOWN"
     assert not normal["status"]["simulated"]
-    assert normal["transport"]["source"] == "transport-victoria"
+    assert normal["transport"]["source"] == "mock" and normal["transport"]["fallback"]
     assert client.post("/api/v1/scenarios/manual", json={"level": 80}).status_code == 409
 
 
@@ -272,3 +272,21 @@ def test_scenario_runtime_recovery_and_pause_clock():
         assert len(current.export()["transitionChecks"]) == 4
         await current.close()
     asyncio.run(run())
+
+
+
+@pytest.mark.parametrize("path", ["/health/live", "/api/v1/health/live"])
+def test_liveness_identifies_the_launcher_instance_when_configured(client, monkeypatch, path):
+    instance_id = str(uuid4())
+    monkeypatch.setenv("PLATFORM_INSTANCE_ID", instance_id)
+    assert client.get(path).json() == {"status": "ok", "instanceId": instance_id}
+
+
+@pytest.mark.parametrize("instance_id", [None, ""])
+def test_liveness_preserves_status_only_without_launcher_identity(client, monkeypatch, instance_id):
+    if instance_id is None:
+        monkeypatch.delenv("PLATFORM_INSTANCE_ID", raising=False)
+    else:
+        monkeypatch.setenv("PLATFORM_INSTANCE_ID", instance_id)
+    assert client.get("/health/live").json() == {"status": "ok"}
+    assert client.get("/api/v1/health/live").json() == {"status": "ok"}

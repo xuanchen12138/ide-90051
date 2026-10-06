@@ -1,6 +1,6 @@
 {
   "additionalProperties": false,
-  "description": "Stable ingestion contract. receivedAt is overwritten by the server.",
+  "description": "Stable ingestion contract; receivedAt is overwritten by the server.\n\nIf supplied, floatLevel/lowerFloat/upperFloat must form a complete and\nconsistent trio. Physical float levels 0/1/2 map to demonstration levels\n0/60/90. Invalid switches (floatLevel=-1) require quality=fault and level 0.",
   "properties": {
     "readingId": {
       "format": "uuid",
@@ -72,6 +72,62 @@
       ],
       "default": null,
       "title": "Rainfallintensitymmperhour"
+    },
+    "floatLevel": {
+      "anyOf": [
+        {
+          "enum": [
+            -1,
+            0,
+            1,
+            2
+          ],
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Floatlevel"
+    },
+    "lowerFloat": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Lowerfloat"
+    },
+    "upperFloat": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Upperfloat"
+    },
+    "sensorUptimeMs": {
+      "anyOf": [
+        {
+          "maximum": 4294967295,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Sensoruptimems"
     },
     "trend": {
       "default": "unknown",

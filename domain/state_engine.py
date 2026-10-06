@@ -27,7 +27,9 @@ def _timestamp(value: Any) -> datetime | None:
 def classify_service(transport: dict, now: datetime) -> tuple[str, str, list[str], list[str]]:
     feeds = transport.get("feeds", {})
     alerts_health = feeds.get("serviceAlerts", {}).get("freshness", transport.get("freshness", "unavailable"))
-    source = transport.get("source", "transport-victoria")
+    source = feeds.get("serviceAlerts", {}).get("source", transport.get("source", "transport-victoria"))
+    if source == "mock":
+        return "UNKNOWN", source, ["MOCK_TRANSPORT_NO_OFFICIAL_STATUS"], ["Demonstration transport data is active; the official service status is unknown. No official alert is simulated."]
     if alerts_health != "fresh":
         return "UNKNOWN", source, ["TRANSPORT_ALERTS_UNAVAILABLE"], ["Current service status is unknown because the service-alert feed is stale or unavailable."]
     alerts = []

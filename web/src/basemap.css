@@ -1,68 +1,48 @@
-.map-stage,.offline-map { background:#edf0ed; }
-.map-heading { top:22px;left:24px;padding:16px 20px 15px;background:#fffffff2;border:1px solid #d8ded8;border-radius:8px;box-shadow:0 3px 18px #24382d09; }
-.map-heading:before { display:none; }
-.map-heading .eyebrow { font-size:10px;letter-spacing:1.4px;gap:9px; }
-.map-heading h1 { font-size:26px;line-height:1.25;letter-spacing:-1px;font-weight:600;margin-top:9px; }
-.map-heading>p { font-size:12px;margin-top:7px;color:#657268; }
-.map-heading>p span { padding:0 3px; }
-.basemap-coverage { fill:#f3f2ed;stroke:#c4ccc4;stroke-width:1;stroke-dasharray:4 5;vector-effect:non-scaling-stroke; }
-.basemap-feature path { stroke-linejoin:round;stroke-linecap:round; }
-.basemap-feature.park path { fill:#dfe7d8;stroke:#d2decb;stroke-width:.5; }
-.basemap-feature.water path { fill:#b8d8dd;stroke:#9dbfc6;stroke-width:1; }
-.basemap-feature.building path { fill:#d8d9d3;stroke:#bcbfb8;stroke-width:.65; }
-.basemap-feature.road path,.basemap-feature.bridge.line path { fill:none;stroke:#fff; }
-.basemap-feature.road .road-casing { stroke:#d5d5cd; }
-.basemap-feature.bridge .road-casing { stroke:#9ca6a1; }
-.basemap-feature.road.minor path,.basemap-feature.bridge.minor path { stroke:#e8e2d2; }
-.basemap-feature.bridge.area path { fill:#e5e5df;stroke:#a5ada7;stroke-width:.8; }
-.basemap-feature.rail path { fill:none;stroke:#aeb6b4;stroke-width:.8;stroke-dasharray:3 2; }
-.basemap-feature.line path { vector-effect:non-scaling-stroke; }
-.map-labels { pointer-events:none; }
-.map-labels text { font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;fill:#626d69;paint-order:stroke;stroke:#f5f4eff2;stroke-width:3.2;stroke-linejoin:round; }
-.map-labels .label-landmark { font-size:12px;font-weight:650;fill:#3c554c;stroke:#f9faf5;stroke-width:4; }
-.map-labels .label-water { font-size:16px;letter-spacing:2px;font-style:italic;fill:#477b89;stroke:#b8d8dd;stroke-width:4; }
-.map-labels .label-bridge { font-size:11px;fill:#445958;stroke:#f6f7f3;stroke-width:4; }
-.map-labels .label-park { fill:#67816a; }
-.site-callout rect { fill:#fff;stroke:#c6d2c9;stroke-width:1; }
-.site-callout .stop-title { font-size:12px;fill:#273f32; }
-.site-callout .stop-caption { font-size:10px;letter-spacing:.2px;fill:#657269; }
-.site-callout line { stroke:#536c5d;stroke-width:1.3; }
-.site-callout { pointer-events:none; }
-.map-source { bottom:13px;left:24px;max-width:calc(100% - 48px);font-size:10px;flex-wrap:wrap;gap:4px 6px;background:#fffffff0;color:#54635c;padding:5px 8px;border:1px solid #e0e5de; }
-.map-source a { text-decoration:underline;text-underline-offset:2px; }
-.map-keyboard-hint { bottom:173px;left:25px;padding:5px 7px;background:#ffffffd9;border-radius:3px;font-size:10px; }
-.map-scale { position:absolute;bottom:179px;right:26px;background:#ffffffdc;padding:5px 8px 3px;font-size:10px;color:#56655e;pointer-events:none; }
-.map-scale i { display:block;height:6px;border:solid #60716a;border-width:0 1px 1px;max-width:150px;margin-top:2px; }
-.map-controls { bottom:214px;right:24px; }
-.north-arrow { top:25px;right:26px;background:#fffffff0;padding:9px 10px;border-radius:5px;border:1px solid #dee4dd;gap:4px; }
-.map-legend { bottom:50px;left:24px;background:#fffffff5; }
-.coverage-note { position:absolute;left:24px;top:161px;max-width:300px;padding:7px 10px;background:#fffffff0;border:1px solid #d8ded8;border-radius:4px;color:#627268;font-size:11px; }
-@media(max-width:1150px) and (min-width:761px) {
-  .map-heading { left:16px;padding:13px 15px; }
-  .map-heading h1 { font-size:22px; }
-  .map-source { left:16px;right:16px;max-width:calc(100% - 32px); }
-  .map-legend { left:16px; }
-}
-@media(max-width:760px) {
-  .offline-map { width:100%;transform:none; }
-  .map-container { bottom:205px; }
-  .map-heading { top:13px;left:13px;padding:11px 13px;border-radius:6px; }
-  .map-heading h1 { font-size:20px;letter-spacing:-.7px;margin-top:6px; }
-  .map-heading .eyebrow { font-size:8px;gap:7px; }
-  .map-heading .route-badge { font-size:10px;min-width:23px;padding:2px 4px; }
-  .map-heading>p { font-size:10px;margin-top:5px; }
-  .north-arrow { top:13px;right:13px;padding:7px; }
-  .map-controls { right:13px;bottom:85px;gap:5px; }
-  .map-controls .map-return { width:34px;height:34px;padding:0;justify-content:center;font-size:0; }
-  .map-return svg { width:17px;height:17px; }
-  .map-full { max-width:80px;font-size:10px;padding:6px; }
-  .map-source { left:10px;bottom:8px;font-size:9px;max-width:calc(100% - 20px);line-height:1.25;padding:4px 6px; }
-  .map-source .source-detail { display:none; }
-  .map-legend { left:10px;bottom:273px;padding:8px;max-width:calc(100% - 95px); }
-  .legend-states { gap:8px;flex-wrap:wrap; }
-  .legend-item { font-size:9px; }
-  .water-legend { font-size:9px;padding-top:5px;margin-top:5px; }
-  .map-scale { right:13px;bottom:45px;font-size:9px; }
-  .map-keyboard-hint { display:none; }
-  .coverage-note { left:13px;top:125px;font-size:10px;max-width:240px; }
+/* ------------------------------------------------------------------
+   Cached OpenStreetMap basemap, drawn as an architectural model:
+   near-white canvas, pale building masses with a soft edge, road
+   corridors that darken with importance, muted water and parks, so the
+   hazard colour on Route 58 stays the single saturated object.
+   ------------------------------------------------------------------ */
+.map-stage, .offline-map { background: #f3f3f0; }
+.basemap-coverage { fill: #f3f3f0; stroke: #cfd3cf; stroke-width: 1; stroke-dasharray: 4 5; vector-effect: non-scaling-stroke; }
+.basemap-feature path { stroke-linejoin: round; stroke-linecap: round; }
+
+/* Ground */
+.basemap-feature.park path { fill: #e4e9e0; stroke: #d7ded3; stroke-width: .5; }
+.basemap-feature.water path { fill: #d5e3e6; stroke: #bfd3d7; stroke-width: .8; }
+
+/* Building masses: white/light grey with a hairline edge and a one-pixel
+   ambient shadow (group filter, rasterised once per frame). */
+.basemap-feature.building path { fill: #ebece9; stroke: #d6d9d5; stroke-width: .6; }
+.city-basemap .building-layer { filter: drop-shadow(0 .7px 0 rgba(90, 96, 100, .26)); }
+
+/* Road corridors: casing is the pale edge, the centre stroke is the corridor.
+   Widths are fixed in screen pixels (non-scaling stroke) so hierarchy survives zoom. */
+.basemap-feature.road path, .basemap-feature.bridge.line path { fill: none; }
+.basemap-feature.road .road-casing, .basemap-feature.bridge .road-casing { stroke: #f3f3f0; }
+.basemap-feature[data-road=major] path:not(.road-casing) { stroke: #555a5e; stroke-width: 4px; }
+.basemap-feature[data-road=major] .road-casing { stroke-width: 6.5px; }
+.basemap-feature[data-road=collector] path:not(.road-casing) { stroke: #9a9fa2; stroke-width: 2.6px; }
+.basemap-feature[data-road=collector] .road-casing { stroke-width: 4.6px; }
+.basemap-feature[data-road=local] path:not(.road-casing) { stroke: #c8ccca; stroke-width: 1.8px; }
+.basemap-feature[data-road=local] .road-casing { stroke-width: 3.5px; }
+.basemap-feature[data-road=minor] path:not(.road-casing) { stroke: #dadcd9; stroke-width: 1.2px; }
+.basemap-feature.road.minor path, .basemap-feature.bridge.minor path { stroke: #dcded9; stroke-width: 1px; }
+.basemap-feature.bridge .road-casing { stroke: #e2e4e0; }
+.basemap-feature.bridge.area path { fill: #e3e4e0; stroke: #b9bfba; stroke-width: .8; }
+.basemap-feature.rail path { fill: none; stroke: #b4babb; stroke-width: .8; stroke-dasharray: 3 2; }
+.basemap-feature.line path { vector-effect: non-scaling-stroke; }
+
+/* Labels: few, quiet, with a canvas-coloured halo. */
+.map-labels { pointer-events: none; }
+.map-labels text { font-family: var(--font-text); font-size: 10.5px; font-weight: 500; fill: #595f64; paint-order: stroke; stroke: rgba(244, 244, 241, .92); stroke-width: 3; stroke-linejoin: round; letter-spacing: .01em; }
+.map-labels .label-road { font-size: 10px; fill: #6b7175; letter-spacing: .03em; }
+.map-labels .label-landmark { font-size: 11.5px; font-weight: 600; fill: #2c3236; stroke: rgba(244, 244, 241, .95); stroke-width: 3.6; letter-spacing: -.005em; }
+.map-labels .label-water { font-size: 13px; letter-spacing: .22em; text-transform: uppercase; font-weight: 500; fill: #4d8191; stroke: #d5e3e6; stroke-width: 3.5; }
+.map-labels .label-bridge { font-size: 10px; fill: #4c5a5c; stroke: rgba(244, 244, 241, .95); stroke-width: 3.4; }
+.map-labels .label-park { fill: #5f7762; letter-spacing: .04em; }
+
+@media (max-width: 760px) {
+  .offline-map { width: 100%; transform: none; }
 }
