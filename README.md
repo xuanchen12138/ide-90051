@@ -7,6 +7,7 @@ Stop 116（City Rd/Kings Way）与 Route 58 的洪水风险预警原型。按照
 需要 Python 3.11+、Node.js 22+ 和 npm 或 pnpm。Windows PowerShell，在项目根目录运行：
 
 ```powershell
+cd "C:\Project\ide-90051"
 python run.py
 ```
 
@@ -20,6 +21,18 @@ python run.py --port 8001
 ```
 
 如果使用当前 Codex 桌面附带的 Node/pnpm，启动脚本也会尝试自动找到它们；其他机器请安装标准 Node/npm。
+
+USB 实体传感器已接入时，可以一条命令启动 API 与串口采集，并默认选择 Physical sensor mode：
+
+```powershell
+cd "C:\Project\ide-90051"
+.\.venv\Scripts\python.exe run.py --sensor-port COM8
+```
+
+当前电脑已识别并实测 Arduino Uno 的 **COM8**。其他电脑用 `scripts\collect_sensor.py --list-ports` 确认端口；关闭 Arduino Serial Monitor 后再启动。若 8000 已被开发服务占用，加 `--port 8001`，访问 http://127.0.0.1:8001。Ctrl+C 会停止本次启动的 API 与 collector 并释放串口。启动器不会烧录固件。完整协议、固件备份及验证边界见 [传感器接入说明](docs/sensor-integration.md)。
+
+**2026-10-06 集成状态**：模拟降雨、移动电车及真实 API 优先/fallback 已在后端完成；COM8 → collector → HTTP API 已通过真实硬件测试。界面由另一个 agent 改版中，新增雨动画、降雨控制与浮球面板的接入和前端构建已按用户要求暂停；不能将后端验证当作当前新界面的验收。待合并内容见 [前端接入记录](docs/simulation-sensor-handoff.md)。
+
 
 ## 云端免费演示部署
 
@@ -44,22 +57,24 @@ python run.py --port 8001
 
 `.env` 已在 `.gitignore` 排除。不要提交密钥；更换 Maps key 后需要 `python run.py --rebuild`。浏览器 Maps key 按设计出现在前端资产中，必须通过 API/referrer/quota 限制保护。交通密钥不会出现在前端。请勿复用指南所指的旧密钥。
 
-没有 Maps key 时，页面使用项目缓存的 **OpenStreetMap 墨尔本局部底图**：显示 Stop 116 周边的真实道路、建筑轮廓、桥梁、河流与公园，并叠加官方 GTFS 线路与站点。底图通过本地 `/api/v1/site/basemap` 加载，正常浏览不依赖在线地图瓦片；地图保留 © OpenStreetMap contributors / ODbL 署名。缓存只覆盖所选 Southbank 周边区域，切换到完整 Route 58 时，范围外仍是 GTFS 线路示意，不代表已下载整个墨尔本的街道。配置有效 Maps key 后可使用 Google Maps。没有交通密钥或 feed 失败时，页面保留演示能力并显示 unavailable/stale。底图来源与覆盖范围见 [底图记录](docs/basemap-data.md)。
+没有 Maps key 时，页面使用项目缓存的 **OpenStreetMap 墨尔本局部底图**：显示 Stop 116 周边的真实道路、建筑轮廓、桥梁、河流与公园，并叠加官方 GTFS 线路与站点。底图通过本地 `/api/v1/site/basemap` 加载，正常浏览不依赖在线地图瓦片；地图保留 © OpenStreetMap contributors / ODbL 署名。缓存只覆盖所选 Southbank 周边区域，切换到完整 Route 58 时，范围外仍是 GTFS 线路示意，不代表已下载整个墨尔本的街道。配置有效 Maps key 后可使用 Google Maps。没有交通密钥或某个 feed 失败/过期时，后端按 feed 回退到 mock 电车/预测，保留 `liveFeeds` 的 unavailable/stale 信息和明确的 source。健康的真实空 feed 不会被误当成故障。模拟公告不会冒充官方运营状态。底图来源与覆盖范围见 [底图记录](docs/basemap-data.md)。
 
 ## 哪些是真实、模拟与未验证
 
 - **真实静态交通数据**：官方 2026-09-18 GTFS；Route `aus:vic:vic-03-58:`；两个方向站点 `18233` / `22612`；线路顶点来自 `shapes.txt`，不是手绘。详见 [GTFS 核验记录](docs/gtfs-provenance.md)。
 - **真实地理背景**：OpenStreetMap 的道路、建筑、桥梁、水域与绿地数据，按局部范围缓存并以 SVG 绘制；遵循 [ODbL](https://opendatacommons.org/licenses/odbl/1-0/) 并保留 [OpenStreetMap 署名](https://www.openstreetmap.org/copyright)。它是静态地理背景，不是实时道路状态、建筑测绘或洪水范围。
-- **真实实时交通数据**：后端请求并解码车辆位置、班次更新、官方服务公告，按已核验 ID 筛选。每个 feed 保留独立源时间、抓取时间、freshness 和失败信息。没有匹配车辆不意味着停运。
+- **真实实时交通数据**：两种水位模式默认都优先使用真实车辆位置、班次更新和官方公告。某个 feed 失败/过期才对该 feed 使用 mock；恢复后自动回到真实数据。每条记录、每个 feed 保留 source 与独立健康信息。没有匹配车辆不意味着停运。Simulation 可显式选择 mock 电车做离线演示，Normal operation 强制恢复自动真实优先。
 - **模拟 hazard**：0–100 的 `scenarioLevel` 和地图上的局部水纹；不是毫米积水深度或真实淹没范围。阈值 25/50/75、滞回 3、上升 dwell 3 秒、恢复 dwell 5 秒均为演示配置。
+- **模拟降雨/电车**：降雨 0–200 mm/h 的演示值与水位脚本独立；没有实现降雨到积水的水动力学预测。两辆 mock 电车沿真实 Route 58 几何移动，并提供演示预测，始终标为 mock。
+- **真实 USB 浮球**：已实测 COM8、9600 baud、每秒心跳到 API；LEVEL 0/1/2 映射为演示值 0/60/90，异常组合为 fault/UNKNOWN。双浮球不测量降雨或毫米水深，这两项保持 null。停止 collector 后约 30 秒数据过期为 UNKNOWN。
 - **官方公告 fixture**：仅用于演示服务状态分类，始终标明 fixture，不是真实官方停运信息。退出该场景就恢复真实交通快照。
-- **未验证部分**：物理传感器、实测水深阈值、洪水水动力学、生产运营与真实设备时钟同步；Google Maps 需使用有效 key 后另行验证；人工 reviewer 评估不会用自动测试替代。
+- **未验证部分**：实际安装高度/开关方向校准、真实拔插与全部浮球组合的人工验收、实测水深阈值、洪水水动力学、生产运营与真实设备时钟同步；Google Maps 需使用有效 key 后另行验证；人工 reviewer 评估不会用自动测试替代。
 
 ## 操作
 
 默认 Simulation mode。选择 Water rising，可观看 NORMAL → WATCH → WARNING → CRITICAL。暂停保持演示水位，传感器心跳继续；Resume 继续场景；Reset 回到正常场景与局部范围。Manual slider 可固定 0–100 的演示水平，状态仍遵循 dwell/hysteresis。Full route demo 仅用于演示，并显示 “Simulated impact — not an official service status.”
 
-Normal operation 使用 physical collector 独立读数；没有设备数据时显示 UNKNOWN。它不会把 mock 读数当成真实观察。
+Normal operation 使用 physical collector 独立读数；没有设备数据或超过 30 秒没有新数据时显示 UNKNOWN。它不会把 mock 水位当成真实观察；电车仍遵循真实 API 优先、故障时 mock fallback。双浮球不提供真实降雨值。
 
 完整演示步骤：[demo-guide.md](docs/demo-guide.md)。评估与限制：[validation.md](docs/validation.md)。
 
@@ -95,7 +110,7 @@ pnpm 用户可使用 `pnpm --dir web test` / `pnpm --dir web build`。浏览器�
 | `web/` | React/TypeScript、缓存 OSM / 可选 Google 底图、GTFS 叠加、状态面板、场景控制、移动端、浏览器测试 |
 | `api/` | FastAPI、SSE、场景 runtime、SQLite 持久化 |
 | `domain/` | 传感器模型、纯状态引擎 |
-| `adapters/` | 官方 GTFS 静态/实时适配器、mock 与 HTTP collector |
+| `adapters/` | 官方 GTFS 静态/实时适配器、移动 mock 电车、mock 水位与 USB/HTTP collector |
 | `config/` | 核验站点、线路与局部底图 GeoJSON、trip ID 索引、演示阈值、预设评估目标 |
 | `contracts/` | Sensor JSON Schema；在线 OpenAPI 在 `/docs` 与 `/openapi.json` |
 | `docs/` | 架构、状态表、数据来源、演示、验证与限制、可选部署说明 |

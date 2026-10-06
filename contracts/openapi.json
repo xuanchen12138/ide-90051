@@ -349,6 +349,42 @@
         }
       }
     },
+    "/api/v1/scenarios/rainfall": {
+      "post": {
+        "summary": "Scenario Rainfall",
+        "operationId": "scenario_rainfall_api_v1_scenarios_rainfall_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RainfallControl"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/settings": {
       "post": {
         "summary": "Settings",
@@ -485,6 +521,22 @@
         ],
         "title": "ManualControl"
       },
+      "RainfallControl": {
+        "properties": {
+          "intensityMmPerHour": {
+            "type": "number",
+            "maximum": 200.0,
+            "minimum": 0.0,
+            "title": "Intensitymmperhour"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "intensityMmPerHour"
+        ],
+        "title": "RainfallControl"
+      },
       "RenderTelemetry": {
         "properties": {
           "readingId": {
@@ -576,6 +628,58 @@
             ],
             "title": "Rainfallintensitymmperhour"
           },
+          "floatLevel": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "enum": [
+                  -1,
+                  0,
+                  1,
+                  2
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Floatlevel"
+          },
+          "lowerFloat": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lowerfloat"
+          },
+          "upperFloat": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upperfloat"
+          },
+          "sensorUptimeMs": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 4294967295.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sensoruptimems"
+          },
           "trend": {
             "type": "string",
             "enum": [
@@ -642,7 +746,7 @@
           "source"
         ],
         "title": "SensorReading",
-        "description": "Stable ingestion contract. receivedAt is overwritten by the server."
+        "description": "Stable ingestion contract; receivedAt is overwritten by the server.\n\nIf supplied, floatLevel/lowerFloat/upperFloat must form a complete and\nconsistent trio. Physical float levels 0/1/2 map to demonstration levels\n0/60/90. Invalid switches (floatLevel=-1) require quality=fault and level 0."
       },
       "SettingsUpdate": {
         "properties": {
@@ -675,6 +779,21 @@
               }
             ],
             "title": "Impactscope"
+          },
+          "transportMode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "mock"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transportmode"
           }
         },
         "additionalProperties": false,
