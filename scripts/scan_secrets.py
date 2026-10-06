@@ -14,7 +14,7 @@ EXCLUDE_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".pytest_cache",
 
 def main():
     load_dotenv(ROOT / ".env")
-    secrets = [os.environ.get(k, "").encode() for k in ("TRANSPORT_VIC_API_KEY", "SENSOR_INGEST_TOKEN", "ADMIN_API_TOKEN")]
+    secrets = [os.environ.get(k, "").encode() for k in ("TRANSPORT_VIC_API_KEY", "SENSOR_INGEST_TOKEN", "ADMIN_API_TOKEN", "DEMO_ACCESS_PASSWORD")]
     secrets = [s for s in secrets if len(s) >= 8]
     findings, scanned = [], 0
     for directory, dirs, files in os.walk(ROOT):

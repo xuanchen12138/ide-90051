@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from adapters.mock_sensor import SCENARIOS, SCENARIO_IDS
+from api.deployment import DemoAccessMiddleware, validate_deployment
 from api.runtime import ROOT, Runtime
 from domain.models import ManualControl, RenderTelemetry, SensorReading, SettingsUpdate, utc_now
 
@@ -23,6 +24,7 @@ load_dotenv(ROOT / ".env")
 def create_app(database_path: str | None = None, start_background: bool = True, transport=None, *, site=None, config=None):
     @asynccontextmanager
     async def lifespan(application):
+        validate_deployment()
         selected_transport = transport
         selected_site = site or json.loads((ROOT / "config/site.json").read_text(encoding="utf-8"))
         if selected_transport is None:
@@ -48,6 +50,8 @@ def create_app(database_path: str | None = None, start_background: bool = True, 
             await application.state.runtime.close()
 
     app = FastAPI(title="Southbank Flood Early-Warning Prototype", version="0.1.0", lifespan=lifespan)
+
+    app.add_middleware(DemoAccessMiddleware)
 
     def runtime(request: Request) -> Runtime:
         return request.app.state.runtime
@@ -81,6 +85,8 @@ def create_app(database_path: str | None = None, start_background: bool = True, 
         return JSONResponse({"detail": "invalid_payload", "validationTypes": codes}, status_code=422)
 
     def authorize(request: Request, environment: str):
+        if environment == "ADMIN_API_TOKEN" and getattr(request.state, "demo_authenticated", False):
+            return
         token = os.getenv(environment, "")
         if not token:
             return

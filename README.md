@@ -21,6 +21,10 @@ python run.py --port 8001
 
 如果使用当前 Codex 桌面附带的 Node/pnpm，启动脚本也会尝试自动找到它们；其他机器请安装标准 Node/npm。
 
+## 云端免费演示部署
+
+部署使用 Northflank Sandbox、单个 Docker 服务和 HTTPS；配置、访问密码、更新流程及临时存储限制见 [部署说明](docs/deployment.md)。`Dockerfile` 在构建时生成前端，运行时启动一个 API/SSE 进程。访问密码与后端 token 仅通过平台运行时变量设置。
+
 ## 密钥
 
 如果根目录还没有 `.env`，复制 `.env.example` 为 `.env`。不要覆盖已有 `.env`。
@@ -33,7 +37,9 @@ python run.py --port 8001
 | `DATABASE_URL` | 默认 `sqlite:///./data/prototype.db`，本地 SQLite |
 | `SENSOR_PROVIDER` | `mock` 默认演示；`physical`/`http` 从 HTTP collector 接口接收真实设备读数 |
 | `SENSOR_INGEST_TOKEN` | 可选 collector Bearer token；共享部署必须配置 |
-| `ADMIN_API_TOKEN` | 可选场景管理 Bearer token；共享部署通过认证反向代理管理 |
+| `ADMIN_API_TOKEN` | 可选场景管理 Bearer token；云端必须配置，浏览器通过独立演示密码认证 |
+| `DEMO_ACCESS_PASSWORD` | 云端浏览器演示密码，至少 16 字符；本地可不设置 |
+| `PUBLIC_DEPLOYMENT` | 云端设为 `true`，启动时强制检查访问保护配置 |
 | `TRANSPORT_POLL_SECONDS` | 默认 60 秒，后端统一轮询，不随浏览器数增加 |
 
 `.env` 已在 `.gitignore` 排除。不要提交密钥；更换 Maps key 后需要 `python run.py --rebuild`。浏览器 Maps key 按设计出现在前端资产中，必须通过 API/referrer/quota 限制保护。交通密钥不会出现在前端。请勿复用指南所指的旧密钥。

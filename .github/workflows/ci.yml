@@ -1,0 +1,48 @@
+name: Validate deployment
+on:
+  push:
+    branches: [main, 'codex/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --global pnpm@11.25.0
+      - run: pnpm --dir web install --frozen-lockfile
+      - run: pnpm --dir web test
+      - run: pnpm --dir web build
+      - name: Verify container build
+        run: docker build -t southbank-ci .
+      - name: Smoke-test the container and access gate
+        shell: bash
+        run: |
+          docker run -d --name southbank-ci -p 10000:10000 \
+            -e PUBLIC_DEPLOYMENT=true \
+            -e DEMO_ACCESS_PASSWORD=ci-only-demo-password \
+            -e ADMIN_API_TOKEN=ci-only-admin-token \
+            -e SENSOR_INGEST_TOKEN=ci-only-sensor-token southbank-ci
+          trap 'docker logs southbank-ci; docker rm -f southbank-ci' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:10000/health/live; then break; fi
+            sleep 2
+          done
+          curl --fail http://127.0.0.1:10000/health/live
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:10000/)" = 401
+          curl --fail --user demo:ci-only-demo-password http://127.0.0.1:10000/ -o /tmp/index.html
+          grep -q '<div id="root">' /tmp/index.html
+          curl --fail --user demo:ci-only-demo-password http://127.0.0.1:10000/api/v1/site/basemap -o /tmp/basemap.json
+          python -c "import json; assert json.load(open('/tmp/basemap.json'))['type'] == 'FeatureCollection'"
